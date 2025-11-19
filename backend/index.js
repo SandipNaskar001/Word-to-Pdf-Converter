@@ -9,8 +9,9 @@ import cors from 'cors'
 const app = express();
 dotenv.config();
 app.use(cors({
-  origin: "https://myproject-git-main-sandipnaskar001s-projects.vercel.app/"  
+  origin: "https://myproject-git-main-sandipnaskar001s-projects.vercel.app"
 }));
+
 
 const PORT = process.env.PORT || 3001;
 
