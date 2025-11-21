@@ -1,58 +1,66 @@
 import express from "express";
 import dotenv from "dotenv";
 import multer from "multer";
-import libre from "libreoffice-convert";
+import docxConverter from "docx-pdf";
 import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
-import cors from "cors";
-
+import { fileURLToPath } from "url"; 
+import fs from "fs"; 
+import cors from 'cors'
 const app = express();
 dotenv.config();
-app.use(cors());
+app.use(cors())
+
 
 const PORT = process.env.PORT || 3001;
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
 if (!fs.existsSync("files")) fs.mkdirSync("files");
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads"),
-  filename: (req, file, cb) => cb(null, file.originalname),
-});
-const upload = multer({ storage });
 
-app.post("/convertpdf", upload.single("file"), async (req, res) => {
+//storage creation
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads");
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  },
+});
+const upload = multer({ storage: storage });
+
+
+app.post("/convertpdf", upload.single("file"), function (req, res, next) {
   try {
     if (!req.file) {
       return res.status(400).json({
-        message: "No file uploaded, please upload a doc/docx file",
+        message: "No file uploaded, please upload a doc file",
       });
     }
 
-    const filePath = req.file.path;
-    const file = fs.readFileSync(filePath);
-
-    const outputPath = path.join(
+  
+    const outputFile = path.join(
       __dirname,
       "files",
       `${req.file.originalname}.pdf`
     );
 
-    libre.convert(file, ".pdf", undefined, (err, done) => {
+    docxConverter(req.file.path, outputFile, function (err, result) {
       if (err) {
-        console.error("Error converting file:", err);
-        return res.status(500).json({
+        console.error(err);
+        return res.status(400).json({
           message: "Error converting file",
-          error: err,
+          error: err, 
         });
       }
 
-      fs.writeFileSync(outputPath, done);
-      return res.download(outputPath);
+      res.download(outputFile, () => {
+        console.log("File downloaded successfully!");
+      });
     });
   } catch (error) {
     console.error(error);
